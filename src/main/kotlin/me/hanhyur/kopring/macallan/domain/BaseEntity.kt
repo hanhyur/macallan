@@ -1,5 +1,6 @@
 package me.hanhyur.kopring.macallan.domain
 
+import jakarta.persistence.Column
 import jakarta.persistence.EntityListeners
 import jakarta.persistence.MappedSuperclass
 import org.springframework.data.annotation.CreatedDate
@@ -11,9 +12,11 @@ import java.time.LocalDateTime
 @EntityListeners(AuditingEntityListener::class)
 class BaseEntity {
 
+    @Column(name = "created_at")
     @CreatedDate
     lateinit var createdAt: LocalDateTime
 
+    @Column(name = "updated_at")
     @LastModifiedDate
     lateinit var updatedAt: LocalDateTime
 

@@ -17,12 +17,17 @@ class Product (
     @Column(name = "product_price")
     var price: Int,
 
-    @Column(name = "product_description")
+    @Column(name = "product_quantity")
+    var quantity: Int,
+
+    @Column(name = "product_category")
     var category: String,
 
-    @Column(name = "product_quantity")
+    @Column(name = "product_description")
     var description: String,
 
-    var status: Status,
+    @Enumerated(EnumType.STRING)
+    @Column(name = "product_status")
+    var status: Status
 ) : BaseEntity()  {
 }

@@ -1,16 +1,61 @@
 package me.hanhyur.kopring.macallan.service
 
-import com.fasterxml.jackson.databind.ObjectMapper
-import com.fasterxml.jackson.module.kotlin.kotlinModule
+import me.hanhyur.kopring.macallan.common.ApiResponse
 import me.hanhyur.kopring.macallan.domain.product.Product
+import me.hanhyur.kopring.macallan.domain.product.Status
+import me.hanhyur.kopring.macallan.dto.request.ProductRequest
+import me.hanhyur.kopring.macallan.dto.response.ProductResponse
+import me.hanhyur.kopring.macallan.repository.ProductRepository
+import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 
 @Service
-class ProductService {
+class ProductService(
+    val productRepository: ProductRepository
+) {
+    private val logger = LoggerFactory.getLogger(this::class.java)
 
-    private val objectMapper = ObjectMapper().registerModule(kotlinModule())
+    fun registerProduct(request: ProductRequest): ApiResponse {
+        val product = Product(
+            name = request.name,
+            description = request.description,
+            price = request.price,
+            quantity = request.quantity,
+            category = request.category,
+            status = Status.valueOf(request.status),
+        )
 
-    fun parseProductFromJson(jsonString: String): Product {
-        return objectMapper.readValue(jsonString, Product::class.java)
+        val saved = productRepository.save(product)
+
+        return ApiResponse.ok(ProductResponse.from(saved))
     }
+
+    fun registerBulkProducts(requests: List<ProductRequest>): ApiResponse {
+        if (requests.isEmpty()) {
+            return ApiResponse.error("상품 목록이 비었습니다")
+        }
+
+        val products = requests.mapNotNull { request ->
+            try {
+                Product(
+                    name = request.name,
+                    price = request.price,
+                    quantity = request.quantity,
+                    category = request.category,
+                    description = request.description,
+                    status = Status.valueOf(request.status.uppercase())
+                )
+            } catch (e: IllegalArgumentException) {
+                logger.warn("잘못된 상품 입력: ${request.name}, 에러: ${e.message}")
+
+                null
+            }
+        }
+
+        val saved = productRepository.saveAll(products)
+        val response = saved.map { ProductResponse.from(it) }
+
+        return ApiResponse.ok(response)
+    }
+
 }
