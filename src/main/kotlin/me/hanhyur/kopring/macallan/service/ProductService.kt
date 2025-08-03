@@ -12,6 +12,7 @@ import org.springframework.data.domain.Page
 import org.springframework.data.domain.PageRequest
 import org.springframework.data.domain.Pageable
 import org.springframework.stereotype.Service
+import org.springframework.transaction.annotation.Transactional
 
 @Service
 class ProductService(
@@ -84,11 +85,33 @@ class ProductService(
         return ApiResponse.ok(response)
     }
 
+    @Transactional
     fun updateProduct(id: Long, request: ProductRequest): ApiResponse {
         val product = productRepository.findById(id)
             .orElse(null) ?: return ApiResponse.error("상품을 찾을 수 없습니다")
 
+        product.name = request.name
+        product.price = request.price
+        product.quantity = request.quantity
+        product.category = request.category
+        product.description = request.description
+        product.status = Status.valueOf(request.status.uppercase())
+
+        logger.info("상품 수정 : $product")
+
         return ApiResponse.ok(ProductResponse.from(product))
+    }
+
+    fun deleteProduct(id: Long): ApiResponse {
+        val exists = productRepository.existsById(id)
+
+        if (!exists) return ApiResponse.error("상품을 찾을 수 없습니다")
+
+        productRepository.deleteById(id)
+
+        logger.info("상품 삭제 : id = $id")
+
+        return ApiResponse.ok("삭제되었습니다")
     }
 
 }
