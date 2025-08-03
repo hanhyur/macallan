@@ -9,19 +9,14 @@ import me.hanhyur.kopring.macallan.dto.request.ProductRequest
 import me.hanhyur.kopring.macallan.dto.response.PagedResponse
 import me.hanhyur.kopring.macallan.dto.response.ProductResponse
 import me.hanhyur.kopring.macallan.repository.ProductRepository
-import org.hibernate.query.Page.page
-import org.junit.jupiter.api.Assertions.assertEquals
-import org.junit.jupiter.api.Assertions.assertFalse
-import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertNull
-import org.junit.jupiter.api.assertThrows
-import org.springframework.data.domain.Page
 import org.springframework.data.domain.PageImpl
 import org.springframework.data.domain.PageRequest
-import java.util.Optional
+import java.util.*
 
 class ProductServiceTest {
 
@@ -122,7 +117,6 @@ class ProductServiceTest {
         fun `단일 상품 조회 성공`() {
             // given
             val id = 1L
-
             val product = Product(
                 name = "맥켈란 12년",
                 price = 150000,
@@ -188,7 +182,6 @@ class ProductServiceTest {
             assertEquals(2, dataList.size)
             assertEquals("글렌피딕 18년", (dataList[0] as ProductResponse).name)
             assertEquals("발베니 14년", (dataList[1] as ProductResponse).name)
-
             verify(exactly = 1) { productRepository.findAll(pageable) }
         }
 
@@ -198,7 +191,71 @@ class ProductServiceTest {
     @DisplayName("상품 수정")
     inner class UpdateProducts() {
 
+        @Test
+        fun `상품 수정 - 성공`() {
+            // given
+            val id = 1L
+            val existingProduct = Product(
+                id,
+                name = "맥켈란 12년",
+                price = 150000,
+                quantity = 5,
+                category = "위스키",
+                description = "기존 설명",
+                status = Status.ON_SALE
+            )
 
+            val request = ProductRequest(
+                name = "맥켈란 18년",
+                price = 200000,
+                quantity = 10,
+                category = "싱글몰트",
+                description = "업데이트 설명",
+                status = "SOLD_OUT"
+            )
+
+            every { productRepository.findById(id) } returns Optional.of(existingProduct)
+
+            // when
+            val response = productService.updateProduct(id, request)
+
+            // then
+            assertTrue(response.success)
+
+            val updated = response.data as ProductResponse
+            assertEquals("맥켈란 18년", updated.name)
+            assertEquals(200000, updated.price)
+            assertEquals(10, updated.quantity)
+            assertEquals("싱글몰트", updated.category)
+            assertEquals("업데이트 설명", updated.description)
+            assertEquals("SOLD_OUT", updated.status)
+            verify(exactly = 1) { productRepository.findById(id) }
+        }
+
+        @Test
+        fun `상품 수정 - 실패(존재하지 않는 상품)`() {
+            // given
+            val id = 999L
+            val request = ProductRequest(
+                name = "글랜리벳",
+                price = 80000,
+                quantity = 3,
+                category = "위스키",
+                description = "설명",
+                status = "ON_SALE",
+            )
+
+            every { productRepository.findById(id) } returns Optional.empty()
+
+            // when
+            val response = productService.updateProduct(id, request)
+
+            // then
+            assertFalse(response.success)
+            assertEquals("상품을 찾을 수 없습니다", response.message)
+            assertNull(response.data)
+            verify(exactly = 1) { productRepository.findById(id) }
+        }
 
     }
 
