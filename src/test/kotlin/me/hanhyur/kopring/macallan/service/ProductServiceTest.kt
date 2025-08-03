@@ -8,12 +8,18 @@ import me.hanhyur.kopring.macallan.domain.product.Status
 import me.hanhyur.kopring.macallan.dto.request.ProductRequest
 import me.hanhyur.kopring.macallan.dto.response.ProductResponse
 import me.hanhyur.kopring.macallan.repository.ProductRepository
+import org.hibernate.query.Page.page
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.assertThrows
+import org.springframework.data.domain.Page
+import org.springframework.data.domain.PageImpl
+import org.springframework.data.domain.PageRequest
+import java.util.Optional
 
 class ProductServiceTest {
 
@@ -106,18 +112,88 @@ class ProductServiceTest {
 
     }
 
-    @Test
-    fun `상품 조회`() {
+    @Nested
+    @DisplayName("상품 조회")
+    inner class FindProducts() {
+
+        @Test
+        fun `단일 상품 조회 성공`() {
+            // given
+            val id = 1L
+
+            val product = Product(
+                name = "맥켈란 12년",
+                price = 1500000,
+                quantity = 10,
+                category = "위스키",
+                description = "싱글 몰트 위스키",
+                status = Status.ON_SALE
+            )
+
+            every { productRepository.findById(id) } returns Optional.of(product)
+
+            // when
+            val response = productService.getProduct(id)
+
+            // then
+            assertTrue(response.success)
+
+            val data = response.data as ProductResponse
+
+            assertEquals("맥켈란 12년", data.name)
+            assertEquals(150000, data.price)
+            verify(exactly = 1) { productRepository.findById(id) }
+        }
+
+        @Test
+        fun `존재하지 않는 상품 조회 - 실패`() {
+            // given
+            val id = 999L
+
+            every { productRepository.findById(id) } returns Optional.empty()
+
+            // when + then
+            val exception = assertThrows<IllegalArgumentException> {
+                productService.getProduct(id)
+            }
+
+            assertEquals("상품을 찾을 수 없습니다", exception.message)
+            verify(exactly = 1) { productRepository.findById(id) }
+        }
+
+        @Test
+        fun `상품 목록 조회 성공`() {
+            // given
+            val page = 0
+            val size = 10
+            val pageable = PageRequest.of(page, size)
+            val products = listOf(
+                Product(1L, "글렌피딕 18년", 150000, 10, "위스키", "부드러운 맛", Status.ON_SALE),
+                Product(2L, "발베니 14년", 180000, 5, "위스키", "달콤한 맛", Status.ON_SALE)
+            )
+            val productPage = PageImpl(products, pageable, products.size.toLong())
+
+            every { productRepository.findAll(pageable) } returns productPage
+
+            // when
+            val response = productService.getProductList(page, size)
+
+            // then
+            assertTrue(response.success)
+
+            val dataList = response.data as? List<*> ?: emptyList<Any>()
+            assertEquals(2, dataList.size)
+            assertEquals("글렌피딕 18년", (dataList[0] as ProductResponse).name)
+            assertEquals("발베니 14년", (dataList[1] as ProductResponse).name)
+
+            verify(exactly = 1) { productRepository.findAll(pageable) }
+        }
 
     }
 
-    @Test
-    fun `상품 수정`() {
-
-    }
-
-    @Test
-    fun `상품 삭제`() {
+    @Nested
+    @DisplayName("상품 수정")
+    inner class UpdateProducts() {
 
     }
 

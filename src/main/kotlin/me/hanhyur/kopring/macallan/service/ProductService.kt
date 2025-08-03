@@ -7,6 +7,9 @@ import me.hanhyur.kopring.macallan.dto.request.ProductRequest
 import me.hanhyur.kopring.macallan.dto.response.ProductResponse
 import me.hanhyur.kopring.macallan.repository.ProductRepository
 import org.slf4j.LoggerFactory
+import org.springframework.data.domain.Page
+import org.springframework.data.domain.PageRequest
+import org.springframework.data.domain.Pageable
 import org.springframework.stereotype.Service
 
 @Service
@@ -54,6 +57,22 @@ class ProductService(
 
         val saved = productRepository.saveAll(products)
         val response = saved.map { ProductResponse.from(it) }
+
+        return ApiResponse.ok(response)
+    }
+
+    fun getProduct(id: Long): ApiResponse {
+        val product = productRepository.findById(id)
+            .orElse(null) ?: return ApiResponse.error("상품을 찾을 수 없습니다")
+
+        return ApiResponse.ok(ProductResponse.from(product))
+    }
+
+    fun getProductList(page: Int, size: Int): ApiResponse {
+        val pageable: Pageable = PageRequest.of(page, size)
+        val products: Page<Product> = productRepository.findAll(pageable)
+
+        val response = products.map { ProductResponse.from(it) }
 
         return ApiResponse.ok(response)
     }
