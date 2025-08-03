@@ -3,19 +3,13 @@ package me.hanhyur.kopring.macallan.controller
 import me.hanhyur.kopring.macallan.common.ApiResponse
 import me.hanhyur.kopring.macallan.dto.request.ProductRequest
 import me.hanhyur.kopring.macallan.service.ProductService
-import org.springframework.web.bind.annotation.GetMapping
-import org.springframework.web.bind.annotation.PathVariable
-import org.springframework.web.bind.annotation.PostMapping
-import org.springframework.web.bind.annotation.RequestBody
-import org.springframework.web.bind.annotation.RequestMapping
-import org.springframework.web.bind.annotation.RequestParam
-import org.springframework.web.bind.annotation.RestController
+import org.springframework.web.bind.annotation.*
 
 @RestController
-@RequestMapping("/api/product")
+@RequestMapping("/v1/products")
 class ProductController(private val productService: ProductService) {
 
-    @PostMapping("/register")
+    @PostMapping()
     fun registerProduct(@RequestBody request: ProductRequest): ApiResponse {
         return productService.registerProduct(request)
     }
@@ -25,9 +19,20 @@ class ProductController(private val productService: ProductService) {
         return productService.getProduct(id)
     }
 
-    @GetMapping("/list")
+    // TODO : 검색 기능 추가
+    @PostMapping("/search")
     fun getProducts(@RequestParam page: Int, @RequestParam pageSize: Int): ApiResponse {
         return productService.getProductList(page, pageSize)
+    }
+
+    @PutMapping("/{id}")
+    fun updateProduct(@PathVariable id: Long, @RequestBody request: ProductRequest): ApiResponse {
+        return productService.updateProduct(id, request)
+    }
+
+    @DeleteMapping("/{id}")
+    fun deleteProduct(@PathVariable id: Long): ApiResponse {
+        return productService.deleteProduct(id)
     }
 
 }
