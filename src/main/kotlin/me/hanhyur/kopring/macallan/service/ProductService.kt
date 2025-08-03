@@ -4,6 +4,7 @@ import me.hanhyur.kopring.macallan.common.ApiResponse
 import me.hanhyur.kopring.macallan.domain.product.Product
 import me.hanhyur.kopring.macallan.domain.product.Status
 import me.hanhyur.kopring.macallan.dto.request.ProductRequest
+import me.hanhyur.kopring.macallan.dto.response.PagedResponse
 import me.hanhyur.kopring.macallan.dto.response.ProductResponse
 import me.hanhyur.kopring.macallan.repository.ProductRepository
 import org.slf4j.LoggerFactory
@@ -72,9 +73,22 @@ class ProductService(
         val pageable: Pageable = PageRequest.of(page, size)
         val products: Page<Product> = productRepository.findAll(pageable)
 
-        val response = products.map { ProductResponse.from(it) }
+        val response = PagedResponse(
+            content = products.map { ProductResponse.from(it) }.content,
+            totalElements = products.totalElements,
+            totalPages = products.totalPages,
+            number = products.number,
+            size = products.size
+        )
 
         return ApiResponse.ok(response)
+    }
+
+    fun updateProduct(id: Long, request: ProductRequest): ApiResponse {
+        val product = productRepository.findById(id)
+            .orElse(null) ?: return ApiResponse.error("상품을 찾을 수 없습니다")
+
+        return ApiResponse.ok(ProductResponse.from(product))
     }
 
 }

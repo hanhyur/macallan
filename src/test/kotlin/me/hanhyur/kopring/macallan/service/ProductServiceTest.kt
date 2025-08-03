@@ -6,6 +6,7 @@ import io.mockk.verify
 import me.hanhyur.kopring.macallan.domain.product.Product
 import me.hanhyur.kopring.macallan.domain.product.Status
 import me.hanhyur.kopring.macallan.dto.request.ProductRequest
+import me.hanhyur.kopring.macallan.dto.response.PagedResponse
 import me.hanhyur.kopring.macallan.dto.response.ProductResponse
 import me.hanhyur.kopring.macallan.repository.ProductRepository
 import org.hibernate.query.Page.page
@@ -15,6 +16,7 @@ import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.assertNull
 import org.junit.jupiter.api.assertThrows
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.PageImpl
@@ -123,7 +125,7 @@ class ProductServiceTest {
 
             val product = Product(
                 name = "맥켈란 12년",
-                price = 1500000,
+                price = 150000,
                 quantity = 10,
                 category = "위스키",
                 description = "싱글 몰트 위스키",
@@ -152,12 +154,13 @@ class ProductServiceTest {
 
             every { productRepository.findById(id) } returns Optional.empty()
 
-            // when + then
-            val exception = assertThrows<IllegalArgumentException> {
-                productService.getProduct(id)
-            }
+            // when
+            val response = productService.getProduct(id)
 
-            assertEquals("상품을 찾을 수 없습니다", exception.message)
+            // then
+            assertFalse(response.success)
+            assertEquals("상품을 찾을 수 없습니다", response.message)
+            assertNull(response.data)
             verify(exactly = 1) { productRepository.findById(id) }
         }
 
@@ -181,7 +184,7 @@ class ProductServiceTest {
             // then
             assertTrue(response.success)
 
-            val dataList = response.data as? List<*> ?: emptyList<Any>()
+            val dataList = (response.data as PagedResponse<*>).content
             assertEquals(2, dataList.size)
             assertEquals("글렌피딕 18년", (dataList[0] as ProductResponse).name)
             assertEquals("발베니 14년", (dataList[1] as ProductResponse).name)
