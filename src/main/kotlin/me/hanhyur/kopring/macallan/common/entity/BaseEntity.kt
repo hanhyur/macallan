@@ -1,4 +1,4 @@
-package me.hanhyur.kopring.macallan.domain
+package me.hanhyur.kopring.macallan.common.entity
 
 import jakarta.persistence.Column
 import jakarta.persistence.EntityListeners

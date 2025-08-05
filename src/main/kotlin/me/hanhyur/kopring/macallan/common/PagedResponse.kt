@@ -1,4 +1,4 @@
-package me.hanhyur.kopring.macallan.dto.response
+package me.hanhyur.kopring.macallan.common
 
 data class PagedResponse<T>(
     val content: List<T>,

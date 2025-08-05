@@ -1,6 +1,6 @@
-package me.hanhyur.kopring.macallan.dto.response
+package me.hanhyur.kopring.macallan.product.response
 
-import me.hanhyur.kopring.macallan.domain.product.Product
+import me.hanhyur.kopring.macallan.product.entity.Product
 
 data class ProductResponse(
     val id: Long,

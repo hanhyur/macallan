@@ -1,4 +1,4 @@
-package me.hanhyur.kopring.macallan.dto.request
+package me.hanhyur.kopring.macallan.product.request
 
 data class ProductRequest(
     val name: String,
