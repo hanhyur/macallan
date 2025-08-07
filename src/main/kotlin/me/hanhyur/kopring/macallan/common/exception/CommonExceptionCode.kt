@@ -6,6 +6,6 @@ enum class CommonExceptionCode(
     val status: HttpStatus,
     val errorCode: String
 ) {
-
+    WRONG_PRODUCT_INFO(HttpStatus.BAD_REQUEST, "잘못된 상품 정보입니다."),
     PRODUCT_NOT_FOUND(HttpStatus.NOT_FOUND, "상품을 찾을 수 없습니다."),
 }
