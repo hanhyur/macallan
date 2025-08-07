@@ -1,7 +1,6 @@
 package me.hanhyur.kopring.macallan.product
 
 import jakarta.validation.Valid
-import me.hanhyur.kopring.macallan.common.ApiResponse
 import me.hanhyur.kopring.macallan.common.PagedResponse
 import me.hanhyur.kopring.macallan.product.request.ProductRequest
 import me.hanhyur.kopring.macallan.product.request.ProductSearchRequest
@@ -9,15 +8,7 @@ import me.hanhyur.kopring.macallan.product.response.ProductDeleteResponse
 import me.hanhyur.kopring.macallan.product.response.ProductResponse
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
-import org.springframework.validation.annotation.Validated
-import org.springframework.web.bind.annotation.DeleteMapping
-import org.springframework.web.bind.annotation.GetMapping
-import org.springframework.web.bind.annotation.PathVariable
-import org.springframework.web.bind.annotation.PostMapping
-import org.springframework.web.bind.annotation.PutMapping
-import org.springframework.web.bind.annotation.RequestBody
-import org.springframework.web.bind.annotation.RequestMapping
-import org.springframework.web.bind.annotation.RestController
+import org.springframework.web.bind.annotation.*
 
 @RestController
 @RequestMapping("/v1/products")
