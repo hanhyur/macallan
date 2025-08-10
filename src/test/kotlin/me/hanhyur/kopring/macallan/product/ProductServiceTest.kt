@@ -1,23 +1,21 @@
-package me.hanhyur.kopring.macallan.service
+package me.hanhyur.kopring.macallan.product
 
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
-import me.hanhyur.kopring.macallan.product.entity.Product
-import me.hanhyur.kopring.macallan.domain.product.Status
-import me.hanhyur.kopring.macallan.product.request.ProductRequest
 import me.hanhyur.kopring.macallan.common.PagedResponse
+import me.hanhyur.kopring.macallan.product.entity.Product
+import me.hanhyur.kopring.macallan.product.request.ProductRequest
 import me.hanhyur.kopring.macallan.product.response.ProductResponse
-import me.hanhyur.kopring.macallan.product.ProductService
-import me.hanhyur.kopring.macallan.product.ProductRepository
-import org.junit.jupiter.api.Assertions.*
+import org.junit.jupiter.api.Assertions
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertNull
 import org.springframework.data.domain.PageImpl
 import org.springframework.data.domain.PageRequest
-import java.util.*
+import java.util.Optional
 
 class ProductServiceTest {
 
@@ -47,7 +45,7 @@ class ProductServiceTest {
                 quantity = request.quantity,
                 category = request.category,
                 description = request.description,
-                status = Status.ON_SALE
+                status = Product.Status.ON_SALE
             )
 
             every { productRepository.save(any()) } returns savedProduct
@@ -59,7 +57,7 @@ class ProductServiceTest {
 
             // then
             assertTrue(response.success)
-            assertEquals("맥켈란 12년", (response.data as ProductResponse).name)
+            Assertions.assertEquals("맥켈란 12년", (response.data as ProductResponse).name)
             verify(exactly = 1) { productRepository.save(any<Product>()) }
         }
 
@@ -90,7 +88,7 @@ class ProductServiceTest {
 
             // then
             assertTrue(response.success)
-            assertEquals(2, (response.data as? List<*>)?.size)
+            Assertions.assertEquals(2, (response.data as? List<*>)?.size)
             verify(exactly = 1) { productRepository.saveAll(any<List<Product>>()) }
         }
 
@@ -104,7 +102,7 @@ class ProductServiceTest {
 
             // then
             assertFalse(response.success)
-            assertEquals("상품 목록이 비었습니다", response.message)
+            Assertions.assertEquals("상품 목록이 비었습니다", response.message)
             verify(exactly = 0) { productRepository.saveAll(any<List<Product>>()) }
         }
 
@@ -137,8 +135,8 @@ class ProductServiceTest {
 
             val data = response.data as ProductResponse
 
-            assertEquals("맥켈란 12년", data.name)
-            assertEquals(150000, data.price)
+            Assertions.assertEquals("맥켈란 12년", data.name)
+            Assertions.assertEquals(150000, data.price)
             verify(exactly = 1) { productRepository.findById(id) }
         }
 
@@ -154,7 +152,7 @@ class ProductServiceTest {
 
             // then
             assertFalse(response.success)
-            assertEquals("상품을 찾을 수 없습니다", response.message)
+            Assertions.assertEquals("상품을 찾을 수 없습니다", response.message)
             assertNull(response.data)
             verify(exactly = 1) { productRepository.findById(id) }
         }
@@ -180,9 +178,9 @@ class ProductServiceTest {
             assertTrue(response.success)
 
             val dataList = (response.data as PagedResponse<*>).content
-            assertEquals(2, dataList.size)
-            assertEquals("글렌피딕 18년", (dataList[0] as ProductResponse).name)
-            assertEquals("발베니 14년", (dataList[1] as ProductResponse).name)
+            Assertions.assertEquals(2, dataList.size)
+            Assertions.assertEquals("글렌피딕 18년", (dataList[0] as ProductResponse).name)
+            Assertions.assertEquals("발베니 14년", (dataList[1] as ProductResponse).name)
             verify(exactly = 1) { productRepository.findAll(pageable) }
         }
 
@@ -224,12 +222,12 @@ class ProductServiceTest {
             assertTrue(response.success)
 
             val updated = response.data as ProductResponse
-            assertEquals("맥켈란 18년", updated.name)
-            assertEquals(200000, updated.price)
-            assertEquals(10, updated.quantity)
-            assertEquals("싱글몰트", updated.category)
-            assertEquals("업데이트 설명", updated.description)
-            assertEquals("SOLD_OUT", updated.status)
+            Assertions.assertEquals("맥켈란 18년", updated.name)
+            Assertions.assertEquals(200000, updated.price)
+            Assertions.assertEquals(10, updated.quantity)
+            Assertions.assertEquals("싱글몰트", updated.category)
+            Assertions.assertEquals("업데이트 설명", updated.description)
+            Assertions.assertEquals("SOLD_OUT", updated.status)
             verify(exactly = 1) { productRepository.findById(id) }
         }
 
@@ -253,7 +251,7 @@ class ProductServiceTest {
 
             // then
             assertFalse(response.success)
-            assertEquals("상품을 찾을 수 없습니다", response.message)
+            Assertions.assertEquals("상품을 찾을 수 없습니다", response.message)
             assertNull(response.data)
             verify(exactly = 1) { productRepository.findById(id) }
         }

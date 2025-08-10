@@ -53,14 +53,19 @@ class ProductController(private val productService: ProductService) {
     }
 
     @PutMapping("/{id}")
-    fun update(@PathVariable id: Long, @RequestBody request: ProductRequest): ResponseEntity<ProductResponse> {
+    fun update(
+        @PathVariable id: Long,
+        @RequestBody request: ProductRequest
+    ): ResponseEntity<ProductResponse> {
         val response = productService.updateProduct(id, request)
 
         return ResponseEntity.status(HttpStatus.OK).body(response)
     }
 
     @DeleteMapping("/{id}")
-    fun delete(@PathVariable id: Long): ResponseEntity<ProductDeleteResponse> {
+    fun delete(
+        @PathVariable id: Long
+    ): ResponseEntity<ProductDeleteResponse> {
         val response = productService.deleteProduct(id)
 
         return ResponseEntity.status(HttpStatus.OK).body(response)
