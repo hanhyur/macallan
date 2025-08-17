@@ -34,13 +34,14 @@ class ProductServiceTest {
                 name = "맥켈란 12년",
                 price = 1500000,
                 quantity = 10,
+                discount = 0,
                 category = "위스키",
                 description = "싱글 몰트 위스키",
                 status = "ON_SALE"
             )
 
+            // id가 baseentity로 갔는데 어떻게 가져올까...
             val savedProduct = Product(
-                id = 1L,
                 name = request.name,
                 price = request.price,
                 quantity = request.quantity,

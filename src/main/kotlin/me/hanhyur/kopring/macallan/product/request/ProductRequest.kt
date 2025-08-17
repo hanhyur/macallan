@@ -7,7 +7,7 @@ data class ProductRequest(
     val name: String,
     val price: Int,
     val quantity: Int,
-    val discount: Double,
+    val discount: Int,
     val category: String,
     val description: String,
     val status: String

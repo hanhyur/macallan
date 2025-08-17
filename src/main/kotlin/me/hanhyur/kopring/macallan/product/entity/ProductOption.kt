@@ -19,6 +19,6 @@ class ProductOption(
     var quantity: Int,
 
     @Column(name = "discount")
-    var discount: Double,
+    var discount: Int,
 ): BaseEntity() {
 }

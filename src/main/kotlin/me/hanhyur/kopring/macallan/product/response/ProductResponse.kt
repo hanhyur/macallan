@@ -1,14 +1,15 @@
 package me.hanhyur.kopring.macallan.product.response
 
 import me.hanhyur.kopring.macallan.product.entity.Product
+import me.hanhyur.kopring.macallan.product.entity.ProductDetail
+import me.hanhyur.kopring.macallan.product.entity.ProductOption
 
 data class ProductResponse(
     val id: Long,
     val name: String,
-    val price: Int,
-    val quantity: Int,
+    val option: ProductOption?,
     val category: String,
-    val description: String,
+    val detail: ProductDetail?,
     val status: String
 ) {
 
@@ -17,10 +18,9 @@ data class ProductResponse(
             return ProductResponse(
                 id = product.id ?: 0L,
                 name = product.name,
-                price = product.price,
-                quantity = product.quantity,
+                option = product.productOption,
                 category = product.category,
-                description = product.description,
+                detail = product.productDetail,
                 status = product.status.name
             )
         }
