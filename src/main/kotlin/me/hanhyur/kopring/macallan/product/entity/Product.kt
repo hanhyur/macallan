@@ -13,11 +13,6 @@ import me.hanhyur.kopring.macallan.common.entity.BaseEntity
 @Entity
 @Table(name = "product")
 class Product (
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(nullable = false)
-    var id: Long? = null,
-
     @Column(name = "product_name")
     var name: String,
 
