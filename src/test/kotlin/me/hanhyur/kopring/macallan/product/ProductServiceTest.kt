@@ -5,6 +5,7 @@ import io.mockk.mockk
 import io.mockk.verify
 import me.hanhyur.kopring.macallan.common.PagedResponse
 import me.hanhyur.kopring.macallan.product.entity.Product
+import me.hanhyur.kopring.macallan.product.repository.ProductRepository
 import me.hanhyur.kopring.macallan.product.request.ProductRequest
 import me.hanhyur.kopring.macallan.product.response.ProductResponse
 import org.junit.jupiter.api.Assertions
@@ -20,7 +21,7 @@ import java.util.Optional
 class ProductServiceTest {
 
     private val productRepository: ProductRepository = mockk(relaxed = true)
-    private val productService = ProductService(productRepository)
+    private val productService = ProductServiceImpl(productRepository)
 
     @Nested
     @DisplayName("상품 등록")
