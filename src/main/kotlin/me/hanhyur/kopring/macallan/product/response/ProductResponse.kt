@@ -10,7 +10,6 @@ data class ProductResponse(
     val option: ProductOption?,
     val category: String,
     val detail: ProductDetail?,
-    val status: String
 ) {
 
     companion object {
@@ -21,7 +20,6 @@ data class ProductResponse(
                 option = product.productOption,
                 category = product.category,
                 detail = product.productDetail,
-                status = product.status.name
             )
         }
     }

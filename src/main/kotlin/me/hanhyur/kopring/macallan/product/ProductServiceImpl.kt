@@ -34,7 +34,6 @@ class ProductServiceImpl(
             productOption = null,
             category = request.category,
             productDetail = null,
-            status = Product.Status.valueOf(request.status),
         )
 
         // 이게 맞나...
@@ -77,7 +76,6 @@ class ProductServiceImpl(
                     productOption = null,
                     category = request.category,
                     productDetail = null,
-                    status = Product.Status.valueOf(request.status.uppercase())
                 )
 
                 // 중복되는데 이게 맞나...
@@ -134,11 +132,12 @@ class ProductServiceImpl(
         val productEntityFromDb = this.getProductFromDb(id);
 
         productEntityFromDb.apply {
-            name = this.name
-            productOption = this.productOption
-            category = this.category
-            productDetail = this.productDetail
-            status = this.status
+            name = request.name
+            category = request.category
+
+            productOption?.price = request.price
+            productOption?.quantity = request.quantity
+            productDetail?.description = request.description
         }
 
         // 저게 맞나..
@@ -147,10 +146,9 @@ class ProductServiceImpl(
             id = $id
             name = ${productEntityFromDb.name}
             price = ${productEntityFromDb.productOption?.price}
-            quantity = ${productEntityFromDb.productOption?.price}
+            quantity = ${productEntityFromDb.productOption?.quantity}
             category = ${productEntityFromDb.category}
             description = ${productEntityFromDb.productDetail?.description}
-            status = ${productEntityFromDb.status}
         """.trimIndent()
         }
 

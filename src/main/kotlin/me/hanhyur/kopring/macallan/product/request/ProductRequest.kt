@@ -9,7 +9,6 @@ data class ProductRequest(
     val quantity: Int,
     val discount: Int,
     val category: String,
-    val description: String,
-    val status: String
+    val description: String
 ) {
 }
