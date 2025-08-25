@@ -9,5 +9,4 @@ class ProductOption(
     var price: Int,
     var quantity: Int,
     var discount: Int,
-): BaseEntity() {
-}
+): BaseEntity()

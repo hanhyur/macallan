@@ -7,5 +7,4 @@ import me.hanhyur.kopring.macallan.common.entity.BaseEntity
 class ProductDetail(
     var productId: Long,
     var description: String,
-): BaseEntity() {
-}
+): BaseEntity()

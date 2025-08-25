@@ -1,5 +1,6 @@
 package me.hanhyur.kopring.macallan.product
 
+import com.sun.org.apache.xml.internal.serializer.Version.getProduct
 import io.github.oshai.kotlinlogging.KotlinLogging
 import me.hanhyur.kopring.macallan.common.PagedResponse
 import me.hanhyur.kopring.macallan.common.exception.enumeration.CommonExceptionCodeType
@@ -9,6 +10,8 @@ import me.hanhyur.kopring.macallan.common.exception.ServerProcessException
 import me.hanhyur.kopring.macallan.product.entity.Product
 import me.hanhyur.kopring.macallan.product.entity.ProductDetail
 import me.hanhyur.kopring.macallan.product.entity.ProductOption
+import me.hanhyur.kopring.macallan.product.repository.ProductDetailRepository
+import me.hanhyur.kopring.macallan.product.repository.ProductOptionRepository
 import me.hanhyur.kopring.macallan.product.repository.ProductRepository
 import me.hanhyur.kopring.macallan.product.request.ProductRequest
 import me.hanhyur.kopring.macallan.product.response.ProductDeleteResponse
@@ -21,53 +24,52 @@ import org.springframework.transaction.annotation.Transactional
 
 @Service
 class ProductServiceImpl(
-    val productRepository: ProductRepository
+    val productRepository: ProductRepository,
+    val productOptionRepository: ProductOptionRepository,
+    val productDetailRepository: ProductDetailRepository
 ): ProductService {
     private val logger = KotlinLogging.logger {}
 
     @Transactional
-    override fun registerProduct(
+    override fun register(
         request: ProductRequest
     ): ProductResponse {
         val product = Product(
             name = request.name,
-            productOption = null,
             category = request.category,
-            productDetail = null,
         )
+        val savedProduct = productRepository.save(product)
 
-        // 이게 맞나...
         val option = ProductOption(
-            product = product,
+            productId = savedProduct.id!!,
             price = request.price,
             quantity = request.quantity,
-            discount = request.discount,
+            discount = request.discount ?: 0,
         )
-        product.productOption = option
+        productOptionRepository.save(option)
 
         val detail = ProductDetail(
-            product = product,
-            description = request.description,
+            productId = savedProduct.id!!,
+            description = request.description ?: "",
         )
-        product.productDetail = detail
+        productDetailRepository.save(detail)
 
-        val saved = productRepository.save(product)
-
-        return ProductResponse.from(saved)
+        return ProductResponse(
+            id = savedProduct.id!!,
+            name = savedProduct.name,
+            category = savedProduct.category,
+            )
     }
 
     @Transactional
-    override fun registerBulkProducts(
+    override fun registerBulk(
         requests: List<ProductRequest>
     ): List<ProductResponse> {
         if (requests.isEmpty()) {
             throw IllegalArgumentException("전달된 목록이 비었습니다. request : $requests")
         }
 
-        // 이게 맞나...
-        val result: MutableList<ProductResponse> = ArrayList()
-
-        requests.forEach { request ->
+        val result = requests.mapNotNull { request ->
             try {
                 this.checkExistName(request.name)
 
@@ -75,36 +77,45 @@ class ProductServiceImpl(
                     name = request.name,
                     category = request.category,
                 )
+                val savedProduct = productRepository.save(product)
 
-                // 중복되는데 이게 맞나...
                 val option = ProductOption(
-                    productId = product.id,
+                    productId = savedProduct.id!!,
                     price = request.price,
                     quantity = request.quantity,
-                    discount = request.discount,
+                    discount = request.discount ?: 0,
                 )
+                productOptionRepository.save(option)
 
                 val detail = ProductDetail(
-                    product = product,
-                    description = request.description,
+                    productId = savedProduct.id!!,
+                    description = request.description ?: "",
                 )
+                productDetailRepository.save(detail)
 
-                val saved = productRepository.save(product)
+                ProductResponse(
+                    id = savedProduct.id!!,
+                    name = savedProduct.name,
+                    category = savedProduct.category,
+                )
+            } catch (e: Exception) {
+                logger.error {
+                    """
+                        상품 등록 중 오류 발생 : ${e.message}
+                        요청 내용 : $request
+                    """.trimIndent()
+                }
 
-                result.add(ProductResponse.from(saved))
-            } catch (e : Exception) {
-                // 씁 이렇게 던지는게 아닌거 같은데...
-                throw ServerProcessException(CommonExceptionCodeType.WRONG_PRODUCT_INFO)
+                null
             }
         }
 
-        // ??? 뭔가 뭔가임...
         return result
     }
 
-    override fun getProduct(id: Long): ProductResponse = ProductResponse.from(this.getProductFromDb(id))
+    override fun get(id: Long): ProductResponse = ProductResponse(getProductFromDb(id).id!!, getProductFromDb(id).name, getProductFromDb(id).category)
 
-    override fun getProductList(
+    override fun getList(
         page: Int,
         size: Int
     ): PagedResponse<ProductResponse> {
@@ -112,7 +123,7 @@ class ProductServiceImpl(
         val products: Page<Product> = productRepository.findAll(pageable)
 
         return PagedResponse(
-            content = products.map { ProductResponse.Companion.from(it) }.content,
+            content = products.map { product -> ProductResponse(product.id!!, product.name, product.category) }.content,
             totalElements = products.totalElements,
             totalPages = products.totalPages,
             number = products.number,
@@ -121,7 +132,7 @@ class ProductServiceImpl(
     }
 
     @Transactional
-    override fun updateProduct(
+    override fun update(
         id: Long,
         request: ProductRequest
     ): ProductResponse {
@@ -130,10 +141,6 @@ class ProductServiceImpl(
         productEntityFromDb.apply {
             name = request.name
             category = request.category
-
-            productOption?.price = request.price
-            productOption?.quantity = request.quantity
-            productDetail?.description = request.description
         }
 
         // 저게 맞나..
@@ -141,17 +148,14 @@ class ProductServiceImpl(
             """
             id = $id
             name = ${productEntityFromDb.name}
-            price = ${productEntityFromDb.productOption?.price}
-            quantity = ${productEntityFromDb.productOption?.quantity}
             category = ${productEntityFromDb.category}
-            description = ${productEntityFromDb.productDetail?.description}
         """.trimIndent()
         }
 
-        return ProductResponse.from(productEntityFromDb)
+        return ProductResponse(productEntityFromDb.id!!, productEntityFromDb.name, productEntityFromDb.category)
     }
 
-    override fun deleteProduct(
+    override fun delete(
         id: Long
     ): ProductDeleteResponse {
         val productEntityFromDb = this.getProductFromDb(id);
@@ -160,7 +164,7 @@ class ProductServiceImpl(
 
         logger.info { "상품 삭제 : id = $id" }
 
-        return ProductDeleteResponse.from(id)
+        return ProductDeleteResponse(id)
     }
 
     private fun getProductFromDb(id: Long): Product = productRepository.findById(id)

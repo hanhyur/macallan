@@ -5,6 +5,4 @@ import me.hanhyur.kopring.macallan.common.exception.enumeration.CommonExceptionC
 class ProductNotFoundException(
     val exceptionCode : CommonExceptionCodeType,
     message : String
-): RuntimeException(message) {
-
-}
+): RuntimeException(message)

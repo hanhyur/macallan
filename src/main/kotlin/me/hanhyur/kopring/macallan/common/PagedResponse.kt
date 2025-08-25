@@ -6,5 +6,4 @@ data class PagedResponse<T>(
     val totalPages: Int,
     val number: Int,
     val size: Int
-) {
-}
+)

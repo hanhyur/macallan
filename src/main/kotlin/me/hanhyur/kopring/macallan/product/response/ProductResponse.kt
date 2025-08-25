@@ -8,16 +8,4 @@ data class ProductResponse(
     val id: Long,
     val name: String,
     val category: String,
-) {
-
-    companion object {
-        fun from(product: Product): ProductResponse {
-            return ProductResponse(
-                id = product.id ?: 0L,
-                name = product.name,
-                category = product.category,
-            )
-        }
-    }
-
-}
+)

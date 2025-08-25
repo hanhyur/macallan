@@ -37,9 +37,7 @@ class ProductController(private val productService: ProductService) {
     fun get(
         @PathVariable id: Long
     ): ResponseEntity<ProductResponse> {
-        val response = productService.getProduct(id)
-
-        return ResponseEntity.status(HttpStatus.OK).body(response)
+        return ResponseEntity.ok(productService.getProduct(id))
     }
 
     // TODO : 검색 기능 추가
@@ -47,9 +45,7 @@ class ProductController(private val productService: ProductService) {
     fun search(
         @RequestBody request: ProductSearchRequest
     ): ResponseEntity<PagedResponse<ProductResponse>> {
-        val pagedResponse = productService.getProductList(request.pageSize, request.pageNumber)
-
-        return ResponseEntity.status(HttpStatus.OK).body(pagedResponse)
+        return ResponseEntity.ok(productService.getProductList(request.pageSize, request.pageNumber))
     }
 
     @PutMapping("/{id}")
@@ -57,18 +53,14 @@ class ProductController(private val productService: ProductService) {
         @PathVariable id: Long,
         @RequestBody request: ProductRequest
     ): ResponseEntity<ProductResponse> {
-        val response = productService.updateProduct(id, request)
-
-        return ResponseEntity.status(HttpStatus.OK).body(response)
+        return ResponseEntity.ok(productService.updateProduct(id, request))
     }
 
     @DeleteMapping("/{id}")
     fun delete(
         @PathVariable id: Long
     ): ResponseEntity<ProductDeleteResponse> {
-        val response = productService.deleteProduct(id)
-
-        return ResponseEntity.status(HttpStatus.OK).body(response)
+        return ResponseEntity.ok(productService.deleteProduct(id))
     }
 
 }
