@@ -2,7 +2,7 @@ package me.hanhyur.kopring.macallan.product
 
 import io.github.oshai.kotlinlogging.KotlinLogging
 import me.hanhyur.kopring.macallan.common.PagedResponse
-import me.hanhyur.kopring.macallan.common.exception.CommonExceptionCode
+import me.hanhyur.kopring.macallan.common.exception.enumeration.CommonExceptionCodeType
 import me.hanhyur.kopring.macallan.common.exception.DuplicateProductNameException
 import me.hanhyur.kopring.macallan.common.exception.ProductNotFoundException
 import me.hanhyur.kopring.macallan.common.exception.ServerProcessException
@@ -73,32 +73,28 @@ class ProductServiceImpl(
 
                 val product = Product(
                     name = request.name,
-                    productOption = null,
                     category = request.category,
-                    productDetail = null,
                 )
 
                 // 중복되는데 이게 맞나...
                 val option = ProductOption(
-                    product = product,
+                    productId = product.id,
                     price = request.price,
                     quantity = request.quantity,
                     discount = request.discount,
                 )
-                product.productOption = option
 
                 val detail = ProductDetail(
                     product = product,
                     description = request.description,
                 )
-                product.productDetail = detail
 
                 val saved = productRepository.save(product)
 
                 result.add(ProductResponse.from(saved))
             } catch (e : Exception) {
                 // 씁 이렇게 던지는게 아닌거 같은데...
-                throw ServerProcessException(CommonExceptionCode.WRONG_PRODUCT_INFO)
+                throw ServerProcessException(CommonExceptionCodeType.WRONG_PRODUCT_INFO)
             }
         }
 
@@ -168,11 +164,17 @@ class ProductServiceImpl(
     }
 
     private fun getProductFromDb(id: Long): Product = productRepository.findById(id)
-        .orElseThrow { ProductNotFoundException(exceptionCode = CommonExceptionCode.PRODUCT_NOT_FOUND) }
+        .orElseThrow { ProductNotFoundException(
+            exceptionCode = CommonExceptionCodeType.PRODUCT_NOT_FOUND,
+            message = "해당 상품을 찾을 수 없습니다. id = $id"
+        ) }
 
     private fun checkExistName(name: String) {
         if (productRepository.findByName(name)) {
-            throw DuplicateProductNameException(exceptionCode = CommonExceptionCode.DUPLICATE_PRODUCT_NAME)
+            throw DuplicateProductNameException(
+                exceptionCode = CommonExceptionCodeType.DUPLICATE_PRODUCT_NAME,
+                message = "이미 존재하는 상품명입니다. name = $name"
+            )
         }
     }
 }

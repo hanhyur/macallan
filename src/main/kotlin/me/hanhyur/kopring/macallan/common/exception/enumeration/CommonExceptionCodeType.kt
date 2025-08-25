@@ -1,8 +1,8 @@
-package me.hanhyur.kopring.macallan.common.exception
+package me.hanhyur.kopring.macallan.common.exception.enumeration
 
 import org.springframework.http.HttpStatus
 
-enum class CommonExceptionCode(
+enum class CommonExceptionCodeType(
     val status: HttpStatus,
     val errorCode: String
 ) {

@@ -7,9 +7,7 @@ import me.hanhyur.kopring.macallan.product.entity.ProductOption
 data class ProductResponse(
     val id: Long,
     val name: String,
-    val option: ProductOption?,
     val category: String,
-    val detail: ProductDetail?,
 ) {
 
     companion object {
@@ -17,9 +15,7 @@ data class ProductResponse(
             return ProductResponse(
                 id = product.id ?: 0L,
                 name = product.name,
-                option = product.productOption,
                 category = product.category,
-                detail = product.productDetail,
             )
         }
     }
