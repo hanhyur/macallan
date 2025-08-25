@@ -10,6 +10,7 @@ import me.hanhyur.kopring.macallan.common.exception.ServerProcessException
 import me.hanhyur.kopring.macallan.product.entity.Product
 import me.hanhyur.kopring.macallan.product.entity.ProductDetail
 import me.hanhyur.kopring.macallan.product.entity.ProductOption
+import me.hanhyur.kopring.macallan.product.mapper.ProductMapper
 import me.hanhyur.kopring.macallan.product.repository.ProductDetailRepository
 import me.hanhyur.kopring.macallan.product.repository.ProductOptionRepository
 import me.hanhyur.kopring.macallan.product.repository.ProductRepository
@@ -26,7 +27,8 @@ import org.springframework.transaction.annotation.Transactional
 class ProductServiceImpl(
     val productRepository: ProductRepository,
     val productOptionRepository: ProductOptionRepository,
-    val productDetailRepository: ProductDetailRepository
+    val productDetailRepository: ProductDetailRepository,
+    private val productMapper: ProductMapper
 ): ProductService {
     private val logger = KotlinLogging.logger {}
 
@@ -54,11 +56,7 @@ class ProductServiceImpl(
         )
         productDetailRepository.save(detail)
 
-        return ProductResponse(
-            id = savedProduct.id!!,
-            name = savedProduct.name,
-            category = savedProduct.category,
-            )
+        return productMapper.toResponse(savedProduct)
     }
 
     @Transactional
@@ -143,7 +141,6 @@ class ProductServiceImpl(
             category = request.category
         }
 
-        // 저게 맞나..
         logger.info {
             """
             id = $id
