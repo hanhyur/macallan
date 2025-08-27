@@ -8,7 +8,7 @@ import me.hanhyur.kopring.macallan.product.entity.Product
 import me.hanhyur.kopring.macallan.product.entity.ProductDetail
 import me.hanhyur.kopring.macallan.product.entity.ProductOption
 import me.hanhyur.kopring.macallan.product.repository.ProductRepository
-import me.hanhyur.kopring.macallan.product.request.ProductRequest
+import me.hanhyur.kopring.macallan.product.request.ProductRegisterRequest
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.DisplayName
@@ -70,7 +70,7 @@ class ProductServiceTest {
         @DisplayName("단일 상품 등록 시, repository save 호출 후 응답 반환")
         fun `register single product`() {
             // given
-            val request = ProductRequest("맥켈란 12년", 150000, 10, 0, "위스키", "싱글 몰트 위스키")
+            val request = ProductRegisterRequest("맥켈란 12년", 150000, 10, 0, "위스키", "싱글 몰트 위스키")
 
             every { productRepository.save(any()) } answers {
                 val savedProduct = firstArg<Product>()
@@ -93,8 +93,8 @@ class ProductServiceTest {
         fun `register bulk products - success`() {
             // given
             val requests = listOf(
-                ProductRequest("글렌피딕 18년", 200000, 5, 0, "위스키", "부드러운 맛"),
-                ProductRequest("발베니 14년", 180000, 7, 0, "위스키", "달콤한 맛")
+                ProductRegisterRequest("글렌피딕 18년", 200000, 5, 0, "위스키", "부드러운 맛"),
+                ProductRegisterRequest("발베니 14년", 180000, 7, 0, "위스키", "달콤한 맛")
             )
 
             every { productRepository.findByName(any()) } returns false
@@ -121,7 +121,7 @@ class ProductServiceTest {
         @DisplayName("대량 상품 등록 시, 목록이 비어있으면 IllegalArgumentException")
         fun `register bulk products - empty list`() {
             // given
-            val requests = emptyList<ProductRequest>()
+            val requests = emptyList<ProductRegisterRequest>()
 
             // when & then
             assertThrows<IllegalArgumentException> {
@@ -135,7 +135,7 @@ class ProductServiceTest {
         fun `register bulk products - duplicate name`() {
             // given
             val requests = listOf(
-                ProductRequest("이미 있는 상품", 200000, 5, 0, "위스키", "부드러운 맛")
+                ProductRegisterRequest("이미 있는 상품", 200000, 5, 0, "위스키", "부드러운 맛")
             )
 
             every { productRepository.findByName("이미 있는 상품") } returns true
@@ -226,7 +226,7 @@ class ProductServiceTest {
             val updatedName = "맥켈란 18년"
 
             val productInDb = createProduct(productId, originalName, 150000, 10, "위스키", "설명")
-            val request = ProductRequest(updatedName, 200000, 5, 0, "싱글몰트", "업데이트된 설명")
+            val request = ProductRegisterRequest(updatedName, 200000, 5, 0, "싱글몰트", "업데이트된 설명")
 
             every { productRepository.findById(productId) } returns Optional.of(productInDb)
 

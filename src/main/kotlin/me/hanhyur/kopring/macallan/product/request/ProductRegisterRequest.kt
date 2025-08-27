@@ -2,7 +2,7 @@ package me.hanhyur.kopring.macallan.product.request
 
 import jakarta.validation.constraints.NotBlank
 
-data class ProductRequest(
+data class ProductRegisterRequest(
     @field:NotBlank
     val name: String,
     val price: Int,

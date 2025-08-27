@@ -2,7 +2,7 @@ package me.hanhyur.kopring.macallan.product
 
 import jakarta.validation.Valid
 import me.hanhyur.kopring.macallan.common.PagedResponse
-import me.hanhyur.kopring.macallan.product.request.ProductRequest
+import me.hanhyur.kopring.macallan.product.request.ProductRegisterRequest
 import me.hanhyur.kopring.macallan.product.request.ProductSearchRequest
 import me.hanhyur.kopring.macallan.product.response.ProductDeleteResponse
 import me.hanhyur.kopring.macallan.product.response.ProductResponse
@@ -16,9 +16,9 @@ class ProductController(private val productService: ProductService) {
 
     @PostMapping
     fun register(
-        @RequestBody request: ProductRequest
+        @RequestBody request: ProductRegisterRequest
     ): ResponseEntity<ProductResponse> {
-        val response = productService.registerProduct(request)
+        val response = productService.register(request)
 
         return ResponseEntity.status(HttpStatus.CREATED).body(response)
     }
@@ -26,9 +26,9 @@ class ProductController(private val productService: ProductService) {
     // TODO : 상품 벌크 등록 API
     @PostMapping("/bulk")
     fun registerBulkProducts(
-        @RequestBody @Valid requests: List<ProductRequest>
+        @RequestBody @Valid requests: List<ProductRegisterRequest>
     ): ResponseEntity<List<ProductResponse>> {
-        val response = productService.registerBulkProducts(requests)
+        val response = productService.registerBulk(requests)
 
         return ResponseEntity.status(HttpStatus.CREATED).body(response)
     }
@@ -37,7 +37,7 @@ class ProductController(private val productService: ProductService) {
     fun get(
         @PathVariable id: Long
     ): ResponseEntity<ProductResponse> {
-        return ResponseEntity.ok(productService.getProduct(id))
+        return ResponseEntity.ok(productService.get(id))
     }
 
     // TODO : 검색 기능 추가
@@ -45,22 +45,22 @@ class ProductController(private val productService: ProductService) {
     fun search(
         @RequestBody request: ProductSearchRequest
     ): ResponseEntity<PagedResponse<ProductResponse>> {
-        return ResponseEntity.ok(productService.getProductList(request.pageSize, request.pageNumber))
+        return ResponseEntity.ok(productService.getList(request.pageSize, request.pageNumber))
     }
 
     @PutMapping("/{id}")
     fun update(
         @PathVariable id: Long,
-        @RequestBody request: ProductRequest
+        @RequestBody request: ProductRegisterRequest
     ): ResponseEntity<ProductResponse> {
-        return ResponseEntity.ok(productService.updateProduct(id, request))
+        return ResponseEntity.ok(productService.update(id, request))
     }
 
     @DeleteMapping("/{id}")
     fun delete(
         @PathVariable id: Long
     ): ResponseEntity<ProductDeleteResponse> {
-        return ResponseEntity.ok(productService.deleteProduct(id))
+        return ResponseEntity.ok(productService.delete(id))
     }
 
 }

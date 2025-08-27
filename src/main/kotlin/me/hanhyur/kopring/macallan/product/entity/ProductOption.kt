@@ -6,7 +6,7 @@ import me.hanhyur.kopring.macallan.common.entity.BaseEntity
 @Entity
 class ProductOption(
     var productId: Long,
-    var price: Int,
+    var optionName: String,
+    var optionPrice: Int,
     var quantity: Int,
-    var discount: Int,
 ): BaseEntity()

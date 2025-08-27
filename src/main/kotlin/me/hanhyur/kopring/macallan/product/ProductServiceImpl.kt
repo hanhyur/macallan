@@ -1,12 +1,10 @@
 package me.hanhyur.kopring.macallan.product
 
-import com.sun.org.apache.xml.internal.serializer.Version.getProduct
 import io.github.oshai.kotlinlogging.KotlinLogging
 import me.hanhyur.kopring.macallan.common.PagedResponse
 import me.hanhyur.kopring.macallan.common.exception.enumeration.CommonExceptionCodeType
 import me.hanhyur.kopring.macallan.common.exception.DuplicateProductNameException
 import me.hanhyur.kopring.macallan.common.exception.ProductNotFoundException
-import me.hanhyur.kopring.macallan.common.exception.ServerProcessException
 import me.hanhyur.kopring.macallan.product.entity.Product
 import me.hanhyur.kopring.macallan.product.entity.ProductDetail
 import me.hanhyur.kopring.macallan.product.entity.ProductOption
@@ -14,7 +12,8 @@ import me.hanhyur.kopring.macallan.product.mapper.ProductMapper
 import me.hanhyur.kopring.macallan.product.repository.ProductDetailRepository
 import me.hanhyur.kopring.macallan.product.repository.ProductOptionRepository
 import me.hanhyur.kopring.macallan.product.repository.ProductRepository
-import me.hanhyur.kopring.macallan.product.request.ProductRequest
+import me.hanhyur.kopring.macallan.product.request.ProductRegisterRequest
+import me.hanhyur.kopring.macallan.product.request.ProductUpdateRequest
 import me.hanhyur.kopring.macallan.product.response.ProductDeleteResponse
 import me.hanhyur.kopring.macallan.product.response.ProductResponse
 import org.springframework.data.domain.Page
@@ -34,7 +33,7 @@ class ProductServiceImpl(
 
     @Transactional
     override fun register(
-        request: ProductRequest
+        request: ProductRegisterRequest
     ): ProductResponse {
         val product = Product(
             name = request.name,
@@ -61,7 +60,7 @@ class ProductServiceImpl(
 
     @Transactional
     override fun registerBulk(
-        requests: List<ProductRequest>
+        requests: List<ProductRegisterRequest>
     ): List<ProductResponse> {
         if (requests.isEmpty()) {
             throw IllegalArgumentException("전달된 목록이 비었습니다. request : $requests")
@@ -132,7 +131,7 @@ class ProductServiceImpl(
     @Transactional
     override fun update(
         id: Long,
-        request: ProductRequest
+        request: ProductUpdateRequest
     ): ProductResponse {
         val productEntityFromDb = this.getProductFromDb(id);
 
