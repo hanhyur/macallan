@@ -6,7 +6,4 @@ data class ProductUpdateRequest(
     val price: Int? = null,
     val origin: String? = null,
     val description: String? = null,
-    val optionName: String? = null,
-    val optionPrice: Int? = null,
-    val quantity: Int? = null,
 )

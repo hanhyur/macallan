@@ -7,7 +7,6 @@ import me.hanhyur.kopring.macallan.common.exception.DuplicateProductNameExceptio
 import me.hanhyur.kopring.macallan.common.exception.ProductNotFoundException
 import me.hanhyur.kopring.macallan.product.entity.Product
 import me.hanhyur.kopring.macallan.product.entity.ProductDetail
-import me.hanhyur.kopring.macallan.product.entity.ProductOption
 import me.hanhyur.kopring.macallan.product.mapper.ProductMapper
 import me.hanhyur.kopring.macallan.product.repository.ProductDetailRepository
 import me.hanhyur.kopring.macallan.product.repository.ProductOptionRepository
@@ -53,10 +52,6 @@ class ProductServiceImpl(
     override fun registerBulk(
         requests: List<ProductRegisterRequest>
     ): List<ProductResponse> {
-        if (requests.isEmpty()) {
-            throw IllegalArgumentException("전달된 목록이 비었습니다. request : $requests")
-        }
-
         val result = requests.mapNotNull { request ->
             try {
                 this.checkExistName(request.name)
@@ -115,9 +110,11 @@ class ProductServiceImpl(
         id: Long,
         request: ProductUpdateRequest
     ): ProductResponse {
-        val productEntityFromDb = this.getProductFromDb(id);
+        val productEntityFromDb = this.getProductFromDb(id)
+        val productDetailFromDb = this.getProductDetailFromDb(id)
 
-        productMapper.toUpdateEntity(request, productEntityFromDb)
+        productMapper.toUpdateProduct(request, productEntityFromDb)
+        productMapper.toUpdateDetail(request, productDetailFromDb)
 
         logger.info {
             """
@@ -127,7 +124,7 @@ class ProductServiceImpl(
         """.trimIndent()
         }
 
-        return ProductResponse(productEntityFromDb.id!!, productEntityFromDb.name, productEntityFromDb.category)
+        return productMapper.toResponse(productEntityFromDb)
     }
 
     override fun delete(
@@ -143,6 +140,12 @@ class ProductServiceImpl(
     }
 
     private fun getProductFromDb(id: Long): Product = productRepository.findById(id)
+        .orElseThrow { ProductNotFoundException(
+            exceptionCode = CommonExceptionCodeType.PRODUCT_NOT_FOUND,
+            message = "해당 상품을 찾을 수 없습니다. id = $id"
+        ) }
+
+    private fun getProductDetailFromDb(id: Long): ProductDetail = productDetailRepository.findById(id)
         .orElseThrow { ProductNotFoundException(
             exceptionCode = CommonExceptionCodeType.PRODUCT_NOT_FOUND,
             message = "해당 상품을 찾을 수 없습니다. id = $id"

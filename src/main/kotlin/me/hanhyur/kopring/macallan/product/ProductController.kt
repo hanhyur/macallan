@@ -29,6 +29,10 @@ class ProductController(private val productService: ProductService) {
     fun registerBulkProducts(
         @RequestBody @Valid requests: List<ProductRegisterRequest>
     ): ResponseEntity<List<ProductResponse>> {
+        if (requests.isEmpty()) {
+            throw IllegalArgumentException("전달된 목록이 비었습니다. request : $requests")
+        }
+
         val response = productService.registerBulk(requests)
 
         return ResponseEntity.status(HttpStatus.CREATED).body(response)
@@ -51,6 +55,14 @@ class ProductController(private val productService: ProductService) {
 
     @PutMapping("/{id}")
     fun update(
+        @PathVariable id: Long,
+        @RequestBody request: ProductUpdateRequest
+    ): ResponseEntity<ProductResponse> {
+        return ResponseEntity.ok(productService.update(id, request))
+    }
+
+    @PutMapping("/{id}/options")
+    fun updateOptions(
         @PathVariable id: Long,
         @RequestBody request: ProductUpdateRequest
     ): ResponseEntity<ProductResponse> {

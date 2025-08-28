@@ -19,6 +19,7 @@ import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
+import org.mapstruct.factory.Mappers
 import org.springframework.data.domain.PageImpl
 import org.springframework.data.domain.PageRequest
 import java.time.LocalDateTime
@@ -26,10 +27,10 @@ import java.util.*
 
 class ProductServiceTest {
 
-    private val productRepository: ProductRepository = mockk(relaxed = true)
-    private val productDetailRepository: ProductDetailRepository = mockk(relaxed = true)
-    private val productOptionRepository: ProductOptionRepository = mockk(relaxed = true)
-    private val productMapper: ProductMapper = mockk(relaxed = true)
+    private val productRepository: ProductRepository = mockk()
+    private val productOptionRepository: ProductOptionRepository = mockk()
+    private val productDetailRepository: ProductDetailRepository = mockk()
+    private val productMapper: ProductMapper = Mappers.getMapper(ProductMapper::class.java)
     private val productService: ProductService = ProductServiceImpl(
         productRepository,
         productOptionRepository,
@@ -39,14 +40,11 @@ class ProductServiceTest {
 
     private fun createProduct(
         id: Long,
-
         name: String,
         category: String,
-
         price: Int,
         origin: String,
         description: String,
-
         optionName: String,
         optionPrice: Int,
         quantity: Int
@@ -60,14 +58,14 @@ class ProductServiceTest {
             this.updatedAt = LocalDateTime.now()
         }
 
-        val detail = ProductDetail(
+        ProductDetail(
             productId = product.id!!,
             price = price,
             origin = origin,
             description = description
         ).apply { this.id = id }
 
-        val option = ProductOption(
+        ProductOption(
             productId = product.id!!,
             optionName = optionName,
             optionPrice = optionPrice,
@@ -86,21 +84,18 @@ class ProductServiceTest {
         fun `register single product`() {
             // given
             val request = ProductRegisterRequest(
-                "맥켈란 12년",
-                "위스키",
-                150000,
-                "스코틀랜드",
-                "싱글 몰트 위스키",
-                "15년",
-                50000,
-                1
+                "맥켈란 12년", "위스키", 150000, "스코틀랜드",
+                "싱글 몰트 위스키", "15년", 50000, 1
             )
+            val product = productMapper.toProduct(request)
+            val detail = productMapper.toDetail(request)
+            val option = productMapper.toOption(request)
 
-            every { productRepository.save(any()) } answers {
-                val savedProduct = firstArg<Product>()
-                savedProduct.id = 1L
-                savedProduct
+            every { productRepository.save(any<Product>()) } answers {
+                firstArg<Product>().apply { id = 1L }
             }
+            every { productDetailRepository.save(any<ProductDetail>()) } returns detail
+            every { productOptionRepository.save(any<ProductOption>()) } returns option
 
             // when
             val response = productService.register(request)
@@ -110,6 +105,8 @@ class ProductServiceTest {
             assertEquals(1L, response.id)
             assertEquals(request.name, response.name)
             verify(exactly = 1) { productRepository.save(any<Product>()) }
+            verify(exactly = 1) { productDetailRepository.save(any<ProductDetail>()) }
+            verify(exactly = 1) { productOptionRepository.save(any<ProductOption>()) }
         }
 
         @Test
@@ -118,35 +115,24 @@ class ProductServiceTest {
             // given
             val requests = listOf(
                 ProductRegisterRequest(
-                    "글렌피딕 18년",
-                    "위스키",
-                    300000,
-                    "스코틀랜드",
-                    "싱글 몰트 위스키",
-                    "30년",
-                    1000000,
-                    1
+                    "글렌피딕 18년", "위스키", 300000, "스코틀랜드",
+                    "싱글 몰트 위스키", "30년", 1000000, 1
                 ),
                 ProductRegisterRequest(
-                    "발베니 14년",
-                    "위스키",
-                    200000,
-                    "스코틀랜드",
-                    "싱글 몰트 위스키",
-                    "18년",
-                    300000,
-                    2
+                    "발베니 14년", "위스키", 200000, "스코틀랜드",
+                    "싱글 몰트 위스키", "18년", 300000, 2
                 )
             )
 
             every { productRepository.findByName(any()) } returns false
-
             every { productRepository.save(any()) } answers {
                 val p = firstArg<Product>()
                 if (p.name == "글렌피딕 18년") p.id = 1L
                 if (p.name == "발베니 14년") p.id = 2L
                 p
             }
+            every { productDetailRepository.save(any()) } returns mockk()
+            every { productOptionRepository.save(any()) } returns mockk()
 
             // when
             val responses = productService.registerBulk(requests)
@@ -160,15 +146,16 @@ class ProductServiceTest {
         }
 
         @Test
-        @DisplayName("대량 상품 등록 시, 목록이 비어있으면 IllegalArgumentException")
+        @DisplayName("대량 상품 등록 시, 목록이 비어있으면 빈 리스트를 반환한다")
         fun `register bulk products - empty list`() {
             // given
             val requests = emptyList<ProductRegisterRequest>()
 
-            // when & then
-            assertThrows<IllegalArgumentException> {
-                productService.registerBulk(requests)
-            }
+            // when
+            val responses = productService.registerBulk(requests)
+
+            // then
+            assertEquals(0, responses.size)
             verify(exactly = 0) { productRepository.save(any()) }
         }
 
@@ -178,33 +165,24 @@ class ProductServiceTest {
             // given
             val requests = listOf(
                 ProductRegisterRequest(
-                    "이미 있는 상품",
-                    "위스키",
-                    299000,
-                    "잉글랜드",
-                    "이미 있는 위스키",
-                    "부드러운 맛",
-                    30000,
-                    2
+                    "이미 있는 상품", "위스키", 299000, "잉글랜드",
+                    "이미 있는 위스키", "부드러운 맛", 30000, 2
                 )
             )
-
             every { productRepository.findByName("이미 있는 상품") } returns true
 
-            // when & then
-            assertThrows<Exception> {
-                productService.registerBulk(requests)
-            }
+            // when
+            productService.registerBulk(requests)
 
+            // then
             verify(exactly = 1) { productRepository.findByName("이미 있는 상품") }
             verify(exactly = 0) { productRepository.save(any()) }
         }
-
     }
 
     @Nested
     @DisplayName("상품 조회")
-    inner class Find() {
+    inner class Find {
 
         @Test
         @DisplayName("ID로 상품 조회 시, repository findById를 호출 후 상품 반환")
@@ -212,15 +190,8 @@ class ProductServiceTest {
             // given
             val productId = 1L
             val foundProduct = createProduct(
-                productId,
-                "맥켈란 12년",
-                "위스키",
-                150000,
-                "스코틀랜드",
-                "싱글 몰트 위스키",
-                "15년",
-                50000,
-                1
+                productId, "맥켈란 12년", "위스키", 150000,
+                "스코틀랜드", "싱글 몰트 위스키", "15년", 50000, 1
             )
 
             every { productRepository.findById(productId) } returns Optional.of(foundProduct)
@@ -257,26 +228,12 @@ class ProductServiceTest {
             val pageable = PageRequest.of(page, size)
             val products = listOf(
                 createProduct(
-                    1L,
-                    "글렌피딕 18년",
-                    "위스키",
-                    300000,
-                    "스코틀랜드",
-                    "싱글 몰트 위스키",
-                    "30년",
-                    1000000,
-                    1
+                    1L, "글렌피딕 18년", "위스키", 300000,
+                    "스코틀랜드", "싱글 몰트 위스키", "30년", 1000000, 1
                 ),
                 createProduct(
-                    2L,
-                    "발베니 14년",
-                    "위스키",
-                    200000,
-                    "스코틀랜드",
-                    "싱글 몰트 위스키",
-                    "18년",
-                    300000,
-                    2
+                    2L, "발베니 14년", "위스키", 200000,
+                    "스코틀랜드", "싱글 몰트 위스키", "18년", 300000, 2
                 )
             )
             val productPage = PageImpl(products, pageable, products.size.toLong())
@@ -291,12 +248,11 @@ class ProductServiceTest {
             assertEquals("글렌피딕 18년", pagedResponse.content[0].name)
             verify(exactly = 1) { productRepository.findAll(pageable) }
         }
-
     }
 
     @Nested
     @DisplayName("상품 수정")
-    inner class Update() {
+    inner class Update {
 
         @Test
         @DisplayName("상품 수정 시, 요청된 내용으로 상품 정보가 변경")
@@ -307,23 +263,21 @@ class ProductServiceTest {
             val updatedName = "맥켈란 18년"
 
             val productInDb = createProduct(
-                productId,
-                originalName,
-                "위스키",
-                150000,
-                "스코틀랜드",
-                "싱글 몰트 위스키",
-                "15년",
-                50000,
-                1
+                productId, originalName, "위스키", 150000,
+                "스코틀랜드", "싱글 몰트 위스키", "15년", 50000, 1
+            )
+            val productDetailInDb = ProductDetail(
+                productId = productId,
+                price = 150000,
+                origin = "스코틀랜드",
+                description = "싱글 몰트 위스키"
             )
             val request = ProductUpdateRequest(
-                updatedName,
-                null,
-                170000
+                updatedName, "싱글몰트", 170000
             )
 
             every { productRepository.findById(productId) } returns Optional.of(productInDb)
+            every { productDetailRepository.findById(productId) } returns Optional.of(productDetailInDb)
 
             // when
             val response = productService.update(productId, request)
@@ -334,6 +288,5 @@ class ProductServiceTest {
 
             verify(exactly = 1) { productRepository.findById(productId) }
         }
-
     }
 }
