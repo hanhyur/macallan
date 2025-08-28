@@ -5,9 +5,11 @@ import jakarta.validation.constraints.NotBlank
 data class ProductRegisterRequest(
     @field:NotBlank
     val name: String,
-    val price: Int,
-    val quantity: Int,
-    val discount: Int? = 0,
     val category: String,
+    val price: Int,
+    val origin: String,
     val description: String? = null,
+    val optionName: String,
+    val optionPrice: Int,
+    val quantity: Int,
 )

@@ -7,8 +7,12 @@ import me.hanhyur.kopring.macallan.common.exception.ProductNotFoundException
 import me.hanhyur.kopring.macallan.product.entity.Product
 import me.hanhyur.kopring.macallan.product.entity.ProductDetail
 import me.hanhyur.kopring.macallan.product.entity.ProductOption
+import me.hanhyur.kopring.macallan.product.mapper.ProductMapper
+import me.hanhyur.kopring.macallan.product.repository.ProductDetailRepository
+import me.hanhyur.kopring.macallan.product.repository.ProductOptionRepository
 import me.hanhyur.kopring.macallan.product.repository.ProductRepository
 import me.hanhyur.kopring.macallan.product.request.ProductRegisterRequest
+import me.hanhyur.kopring.macallan.product.request.ProductUpdateRequest
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.DisplayName
@@ -18,46 +22,57 @@ import org.junit.jupiter.api.assertThrows
 import org.springframework.data.domain.PageImpl
 import org.springframework.data.domain.PageRequest
 import java.time.LocalDateTime
-import java.util.Optional
+import java.util.*
 
 class ProductServiceTest {
 
     private val productRepository: ProductRepository = mockk(relaxed = true)
-    private val productService: ProductService = ProductServiceImpl(productRepository)
+    private val productDetailRepository: ProductDetailRepository = mockk(relaxed = true)
+    private val productOptionRepository: ProductOptionRepository = mockk(relaxed = true)
+    private val productMapper: ProductMapper = mockk(relaxed = true)
+    private val productService: ProductService = ProductServiceImpl(
+        productRepository,
+        productOptionRepository,
+        productDetailRepository,
+        productMapper
+    )
 
     private fun createProduct(
         id: Long,
+
         name: String,
-        price: Int,
-        quantity: Int,
         category: String,
-        description: String
+
+        price: Int,
+        origin: String,
+        description: String,
+
+        optionName: String,
+        optionPrice: Int,
+        quantity: Int
     ): Product {
         val product = Product(
             name = name,
-            productOption = null,
             category = category,
-            productDetail = null,
         ).apply {
             this.id = id
             this.createdAt = LocalDateTime.now()
             this.updatedAt = LocalDateTime.now()
         }
 
-        val option = ProductOption(
-            product = product,
-            price = price,
-            quantity = quantity,
-            discount = 0
-        ).apply { this.id = id }
-
         val detail = ProductDetail(
-            product = product,
+            productId = product.id!!,
+            price = price,
+            origin = origin,
             description = description
         ).apply { this.id = id }
 
-        product.productOption = option
-        product.productDetail = detail
+        val option = ProductOption(
+            productId = product.id!!,
+            optionName = optionName,
+            optionPrice = optionPrice,
+            quantity = quantity
+        ).apply { this.id = id }
 
         return product
     }
@@ -70,7 +85,16 @@ class ProductServiceTest {
         @DisplayName("단일 상품 등록 시, repository save 호출 후 응답 반환")
         fun `register single product`() {
             // given
-            val request = ProductRegisterRequest("맥켈란 12년", 150000, 10, 0, "위스키", "싱글 몰트 위스키")
+            val request = ProductRegisterRequest(
+                "맥켈란 12년",
+                "위스키",
+                150000,
+                "스코틀랜드",
+                "싱글 몰트 위스키",
+                "15년",
+                50000,
+                1
+            )
 
             every { productRepository.save(any()) } answers {
                 val savedProduct = firstArg<Product>()
@@ -79,7 +103,7 @@ class ProductServiceTest {
             }
 
             // when
-            val response = productService.registerProduct(request)
+            val response = productService.register(request)
 
             // then
             assertNotNull(response)
@@ -93,8 +117,26 @@ class ProductServiceTest {
         fun `register bulk products - success`() {
             // given
             val requests = listOf(
-                ProductRegisterRequest("글렌피딕 18년", 200000, 5, 0, "위스키", "부드러운 맛"),
-                ProductRegisterRequest("발베니 14년", 180000, 7, 0, "위스키", "달콤한 맛")
+                ProductRegisterRequest(
+                    "글렌피딕 18년",
+                    "위스키",
+                    300000,
+                    "스코틀랜드",
+                    "싱글 몰트 위스키",
+                    "30년",
+                    1000000,
+                    1
+                ),
+                ProductRegisterRequest(
+                    "발베니 14년",
+                    "위스키",
+                    200000,
+                    "스코틀랜드",
+                    "싱글 몰트 위스키",
+                    "18년",
+                    300000,
+                    2
+                )
             )
 
             every { productRepository.findByName(any()) } returns false
@@ -107,7 +149,7 @@ class ProductServiceTest {
             }
 
             // when
-            val responses = productService.registerBulkProducts(requests)
+            val responses = productService.registerBulk(requests)
 
             // then
             assertEquals(2, responses.size)
@@ -125,7 +167,7 @@ class ProductServiceTest {
 
             // when & then
             assertThrows<IllegalArgumentException> {
-                productService.registerBulkProducts(requests)
+                productService.registerBulk(requests)
             }
             verify(exactly = 0) { productRepository.save(any()) }
         }
@@ -135,14 +177,23 @@ class ProductServiceTest {
         fun `register bulk products - duplicate name`() {
             // given
             val requests = listOf(
-                ProductRegisterRequest("이미 있는 상품", 200000, 5, 0, "위스키", "부드러운 맛")
+                ProductRegisterRequest(
+                    "이미 있는 상품",
+                    "위스키",
+                    299000,
+                    "잉글랜드",
+                    "이미 있는 위스키",
+                    "부드러운 맛",
+                    30000,
+                    2
+                )
             )
 
             every { productRepository.findByName("이미 있는 상품") } returns true
 
             // when & then
             assertThrows<Exception> {
-                productService.registerBulkProducts(requests)
+                productService.registerBulk(requests)
             }
 
             verify(exactly = 1) { productRepository.findByName("이미 있는 상품") }
@@ -160,12 +211,22 @@ class ProductServiceTest {
         fun `get product by id - success`() {
             // given
             val productId = 1L
-            val foundProduct = createProduct(productId, "맥켈란 12년", 150000, 10, "위스키", "싱글 몰트 위스키")
+            val foundProduct = createProduct(
+                productId,
+                "맥켈란 12년",
+                "위스키",
+                150000,
+                "스코틀랜드",
+                "싱글 몰트 위스키",
+                "15년",
+                50000,
+                1
+            )
 
             every { productRepository.findById(productId) } returns Optional.of(foundProduct)
 
             // when
-            val response = productService.getProduct(productId)
+            val response = productService.get(productId)
 
             // then
             assertEquals(foundProduct.id, response.id)
@@ -182,7 +243,7 @@ class ProductServiceTest {
 
             // when & then
             assertThrows<ProductNotFoundException> {
-                productService.getProduct(productId)
+                productService.get(productId)
             }
             verify(exactly = 1) { productRepository.findById(productId) }
         }
@@ -195,15 +256,35 @@ class ProductServiceTest {
             val size = 10
             val pageable = PageRequest.of(page, size)
             val products = listOf(
-                createProduct(1L, "글렌피딕 18년", 200000, 5, "위스키", "부드러운 맛"),
-                createProduct(2L, "발베니 14년", 180000, 7, "위스키", "달콤한 맛")
+                createProduct(
+                    1L,
+                    "글렌피딕 18년",
+                    "위스키",
+                    300000,
+                    "스코틀랜드",
+                    "싱글 몰트 위스키",
+                    "30년",
+                    1000000,
+                    1
+                ),
+                createProduct(
+                    2L,
+                    "발베니 14년",
+                    "위스키",
+                    200000,
+                    "스코틀랜드",
+                    "싱글 몰트 위스키",
+                    "18년",
+                    300000,
+                    2
+                )
             )
             val productPage = PageImpl(products, pageable, products.size.toLong())
 
             every { productRepository.findAll(pageable) } returns productPage
 
             // when
-            val pagedResponse = productService.getProductList(page, size)
+            val pagedResponse = productService.getList(page, size)
 
             // then
             assertEquals(products.size, pagedResponse.content.size)
@@ -225,13 +306,27 @@ class ProductServiceTest {
             val originalName = "맥켈란 12년"
             val updatedName = "맥켈란 18년"
 
-            val productInDb = createProduct(productId, originalName, 150000, 10, "위스키", "설명")
-            val request = ProductRegisterRequest(updatedName, 200000, 5, 0, "싱글몰트", "업데이트된 설명")
+            val productInDb = createProduct(
+                productId,
+                originalName,
+                "위스키",
+                150000,
+                "스코틀랜드",
+                "싱글 몰트 위스키",
+                "15년",
+                50000,
+                1
+            )
+            val request = ProductUpdateRequest(
+                updatedName,
+                null,
+                170000
+            )
 
             every { productRepository.findById(productId) } returns Optional.of(productInDb)
 
             // when
-            val response = productService.updateProduct(productId, request)
+            val response = productService.update(productId, request)
 
             // then
             assertEquals(productId, response.id)

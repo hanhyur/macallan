@@ -6,6 +6,5 @@ import me.hanhyur.kopring.macallan.common.entity.BaseEntity
 @Entity
 class Product (
     var name: String,
-    var price: Int,
     var category: String,
 ) : BaseEntity()

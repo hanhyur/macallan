@@ -24,9 +24,9 @@ import org.springframework.transaction.annotation.Transactional
 
 @Service
 class ProductServiceImpl(
-    val productRepository: ProductRepository,
-    val productOptionRepository: ProductOptionRepository,
-    val productDetailRepository: ProductDetailRepository,
+    private val productRepository: ProductRepository,
+    private val productOptionRepository: ProductOptionRepository,
+    private val productDetailRepository: ProductDetailRepository,
     private val productMapper: ProductMapper
 ): ProductService {
     private val logger = KotlinLogging.logger {}
@@ -35,25 +35,16 @@ class ProductServiceImpl(
     override fun register(
         request: ProductRegisterRequest
     ): ProductResponse {
-        val product = Product(
-            name = request.name,
-            category = request.category,
-        )
+        val product = productMapper.toProduct(request)
         val savedProduct = productRepository.save(product)
 
-        val option = ProductOption(
-            productId = savedProduct.id!!,
-            price = request.price,
-            quantity = request.quantity,
-            discount = request.discount ?: 0,
-        )
-        productOptionRepository.save(option)
-
-        val detail = ProductDetail(
-            productId = savedProduct.id!!,
-            description = request.description ?: "",
-        )
+        val detail = productMapper.toDetail(request)
+        detail.productId = savedProduct.id!!
         productDetailRepository.save(detail)
+
+        val option = productMapper.toOption(request)
+        option.productId = savedProduct.id!!
+        productOptionRepository.save(option)
 
         return productMapper.toResponse(savedProduct)
     }
@@ -70,31 +61,18 @@ class ProductServiceImpl(
             try {
                 this.checkExistName(request.name)
 
-                val product = Product(
-                    name = request.name,
-                    category = request.category,
-                )
+                val product = productMapper.toProduct(request)
                 val savedProduct = productRepository.save(product)
 
-                val option = ProductOption(
-                    productId = savedProduct.id!!,
-                    price = request.price,
-                    quantity = request.quantity,
-                    discount = request.discount ?: 0,
-                )
-                productOptionRepository.save(option)
-
-                val detail = ProductDetail(
-                    productId = savedProduct.id!!,
-                    description = request.description ?: "",
-                )
+                val detail = productMapper.toDetail(request)
+                detail.productId = savedProduct.id!!
                 productDetailRepository.save(detail)
 
-                ProductResponse(
-                    id = savedProduct.id!!,
-                    name = savedProduct.name,
-                    category = savedProduct.category,
-                )
+                val option = productMapper.toOption(request)
+                option.productId = savedProduct.id!!
+                productOptionRepository.save(option)
+
+                productMapper.toResponse(savedProduct)
             } catch (e: Exception) {
                 logger.error {
                     """
@@ -110,7 +88,11 @@ class ProductServiceImpl(
         return result
     }
 
-    override fun get(id: Long): ProductResponse = ProductResponse(getProductFromDb(id).id!!, getProductFromDb(id).name, getProductFromDb(id).category)
+    override fun get(id: Long): ProductResponse {
+        val product = getProductFromDb(id)
+
+        return productMapper.toResponse(product)
+    }
 
     override fun getList(
         page: Int,
@@ -120,7 +102,7 @@ class ProductServiceImpl(
         val products: Page<Product> = productRepository.findAll(pageable)
 
         return PagedResponse(
-            content = products.map { product -> ProductResponse(product.id!!, product.name, product.category) }.content,
+            content = products.content.map(productMapper::toResponse),
             totalElements = products.totalElements,
             totalPages = products.totalPages,
             number = products.number,
@@ -135,10 +117,7 @@ class ProductServiceImpl(
     ): ProductResponse {
         val productEntityFromDb = this.getProductFromDb(id);
 
-        productEntityFromDb.apply {
-            name = request.name
-            category = request.category
-        }
+        productMapper.toUpdateEntity(request, productEntityFromDb)
 
         logger.info {
             """

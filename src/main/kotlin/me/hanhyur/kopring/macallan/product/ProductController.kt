@@ -4,6 +4,7 @@ import jakarta.validation.Valid
 import me.hanhyur.kopring.macallan.common.PagedResponse
 import me.hanhyur.kopring.macallan.product.request.ProductRegisterRequest
 import me.hanhyur.kopring.macallan.product.request.ProductSearchRequest
+import me.hanhyur.kopring.macallan.product.request.ProductUpdateRequest
 import me.hanhyur.kopring.macallan.product.response.ProductDeleteResponse
 import me.hanhyur.kopring.macallan.product.response.ProductResponse
 import org.springframework.http.HttpStatus
@@ -51,7 +52,7 @@ class ProductController(private val productService: ProductService) {
     @PutMapping("/{id}")
     fun update(
         @PathVariable id: Long,
-        @RequestBody request: ProductRegisterRequest
+        @RequestBody request: ProductUpdateRequest
     ): ResponseEntity<ProductResponse> {
         return ResponseEntity.ok(productService.update(id, request))
     }
